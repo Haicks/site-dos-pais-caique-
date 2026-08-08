@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz: O Quanto Você Conhece o Meu Pai?</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      background-color: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 600px;
+      padding: 30px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #1e3c72;
+      margin-bottom: 20px;
+      font-size: 1.8rem;
+    }
+
+    .card {
+      display: none;
+    }
+
+    .card.active {
+      display: block;
+    }
+
+    .btn {
+      background-color: #2a5298;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.1s;
+      margin-top: 20px;
+      width: 100%;
+      font-weight: bold;
+    }
+
+    .btn:hover {
+      background-color: #1e3c72;
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .options {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .option-btn {
+      background-color: #f0f4f8;
+      border: 2px solid #d0dbe5;
+      padding: 14px;
+      border-radius: 8px;
+      text-align: left;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #2c3e50;
+    }
+
+    .option-btn:hover {
+      background-color: #e2ebf3;
+      border-color: #2a5298;
+    }
+
+    .option-btn.selected {
+      background-color: #2a5298;
+      color: white;
+      border-color: #1e3c72;
+    }
+
+    .progress {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 15px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .result-score {
+      font-size: 3rem;
+      font-weight: bold;
+      color: #2a5298;
+      margin: 20px 0;
+    }
+
+    .result-message {
+      font-size: 1.2rem;
+      color: #555;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <!-- Tela Inicial -->
+    <div id="start-card" class="card active">
+      <h1>Quiz: O Quanto Você Conhece o Meu Pai? 🤔</h1>
+      <p style="color: #666; margin-bottom: 20px;">Responda às perguntas e veja quantos pontos você consegue fazer!</p>
+      <button class="btn" onclick="iniciarQuiz()">Iniciar Quiz</button>
+    </div>
+
+    <!-- Tela de Pergunta -->
+    <div id="quiz-card" class="card">
+      <div id="progress" class="progress"></div>
+      <h2 id="question-text" style="font-size: 1.3rem; color: #2c3e50;"></h2>
+      <div id="options-container" class="options"></div>
+      <button id="next-btn" class="btn" onclick="proximaPergunta()" disabled>Confirmar Resposta</button>
+    </div>
+
+    <!-- Tela de Resultado -->
+    <div id="result-card" class="card">
+      <h1>Resultado Final! 🎉</h1>
+      <div id="result-score" class="result-score">0/0</div>
+      <p id="result-message" class="result-message"></p>
+      <button class="btn" onclick="reiniciarQuiz()">Tentar Novamente</button>
+    </div>
+  </div>
+
+  <script>
+    // EDITAR PERGUNTAS AQUI:
+    // Altere a pergunta, as opções e o número da opção correta (começando em 0).
+    const perguntas = [
+      {
+        pergunta: "Qual é o prato de comida favorito do meu pai?",
+        opcoes: ["Churrasco", "Feijoada", "Massa/Lasanha", "Comida Japonesa"],
+        correta: 0
+      },
+      {
+        pergunta: "O que ele mais gosta de fazer no fim de semana?",
+        opcoes: ["Assistir futebol / esportes", "Dormir até tarde", "Mexer no jardim / consertar coisas", "Viajar / Passear"],
+        correta: 2
+      },
+      {
+        pergunta: "Qual é o time de futebol dele?",
+        opcoes: ["Flamengo", "Corinthians", "São Paulo", "Palmeiras"],
+        correta: 1
+      },
+      {
+        pergunta: "Qual é a frase ou mania clássica dele?",
+        opcoes: ["'Na minha época não era assim'", "'Já desligou as luzes?'", "'Pergunta pra sua mãe'", "'Dormir cedo pra acordar cedo'"],
+        correta: 2
+      }
+    ];
+
+    let indiceAtual = 0;
+    let pontuacao = 0;
+    let opcaoSelecionada = null;
+
+    function iniciarQuiz() {
+      indiceAtual = 0;
+      pontuacao = 0;
+      mostrarTela('quiz-card');
+      carregarPergunta();
+    }
+
+    function carregarPergunta() {
+      opcaoSelecionada = null;
+      document.getElementById('next-btn').disabled = true;
+
+      const q = perguntas[indiceAtual];
+      document.getElementById('progress').innerText = `Pergunta ${indiceAtual + 1} de ${perguntas.length}`;
+      document.getElementById('question-text').innerText = q.pergunta;
+
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+
+      q.opcoes.forEach((opcao, index) => {
+        const button = document.createElement('button');
+        button.className = 'option-btn';
+        button.innerText = opcao;
+        button.onclick = () => selecionarOpcao(index, button);
+        optionsContainer.appendChild(button);
+      });
+    }
+
+    function selecionarOpcao(index, element) {
+      opcaoSelecionada = index;
+      const botoes = document.querySelectorAll('.option-btn');
+      botoes.forEach(b => b.classList.remove('selected'));
+      element.classList.add('selected');
+      document.getElementById('next-btn').disabled = false;
+    }
+
+    function proximaPergunta() {
+      if (opcaoSelecionada === perguntas[indiceAtual].correta) {
+        pontuacao++;
+      }
+
+      indiceAtual++;
+
+      if (indiceAtual < perguntas.length) {
+        carregarPergunta();
+      } else {
+        mostrarResultado();
+      }
+    }
+
+    function mostrarResultado() {
+      mostrarTela('result-card');
+      const total = perguntas.length;
+      document.getElementById('result-score').innerText = `${pontuacao} / ${total}`;
+
+      let mensagem = '';
+      const porcentagem = (pontuacao / total) * 100;
+
+      if (porcentagem === 100) {
+        mensagem = "Incrível! Você conhece meu pai perfeitamente! 🏆";
+      } else if (porcentagem >= 50) {
+        mensagem = "Muito bem! Você conhece bastante sobre ele! 🙂";
+      } else {
+        mensagem = "Parece que você precisa prestar mais atenção nele! 😄";
+      }
+
+      document.getElementById('result-message').innerText = mensagem;
+    }
+
+    function reiniciarQuiz() {
+      mostrarTela('start-card');
+    }
+
+    function mostrarTela(cardId) {
+      document.querySelectorAll('.card').forEach(c => c.classList.remove('active'));
+      document.getElementById(cardId).classList.add('active');
+    }
+  </script>
+</body>
+</html>
